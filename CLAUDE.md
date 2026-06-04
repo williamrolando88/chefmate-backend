@@ -28,6 +28,16 @@ Follow a **pragmatic ports-and-adapters** (hexagonal) layout. Every domain lives
 
 ```
 src/
+  shared/
+    infrastructure/
+      supabase/
+        supabase.module.ts        # @Global() — imported once in AppModule
+        supabase.service.ts       # wraps the Supabase JS client
+      guards/
+        auth.guard.ts             # JWT guard shared across features
+      filters/                    # global exception filters
+      interceptors/               # global interceptors
+    domain/                       # shared value objects / base types (if needed)
   <feature>/
     domain/
       <feature>.entity.ts                      # pure domain model — no framework deps
@@ -40,6 +50,8 @@ src/
       <feature>.controller.ts                  # HTTP adapter (NestJS decorators live here)
     <feature>.module.ts                        # wires ports to adapters via DI
 ```
+
+`shared/` is the only place for cross-cutting infrastructure. Never put shared concerns directly inside a feature folder.
 
 ### Layer rules
 
@@ -69,7 +81,7 @@ src/
 
 ## Supabase integration
 
-- Access Supabase via the `@supabase/supabase-js` client wrapped in an injectable `SupabaseService`.
+- Access Supabase via the `@supabase/supabase-js` client wrapped in `src/shared/infrastructure/supabase/supabase.service.ts`. Import `SupabaseModule` in `AppModule` only — it is `@Global()` so feature modules do not need to re-import it.
 - Use Row-Level Security (RLS) policies for authorization — do not replicate access logic in the NestJS layer.
 - Migrations live in `supabase/migrations/`. Always generate them with `supabase migration new` rather than editing manually.
 - Seed data goes in `supabase/seed.sql`.
@@ -80,6 +92,7 @@ src/
 Every source file must have a companion test file co-located in the same directory:
 
 ```
+src/shared/infrastructure/supabase/supabase.service.ts   → supabase.service.test.ts
 src/users/domain/user.entity.ts                          → user.entity.test.ts
 src/users/application/users.service.ts                   → users.service.test.ts
 src/users/infrastructure/users.controller.ts             → users.controller.test.ts
