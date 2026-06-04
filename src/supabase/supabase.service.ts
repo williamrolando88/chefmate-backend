@@ -4,7 +4,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 @Injectable()
 export class SupabaseService {
-  private readonly client: SupabaseClient;
+  private readonly client: ReturnType<typeof createClient>;
 
   constructor(private readonly config: ConfigService) {
     this.client = createClient(

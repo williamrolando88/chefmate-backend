@@ -24,23 +24,38 @@ supabase migration new <name>
 
 ## Architecture
 
-Follow NestJS feature-module structure. Every domain lives under `src/<feature>/`:
+Follow a **pragmatic ports-and-adapters** (hexagonal) layout. Every domain lives under `src/<feature>/` and is split into three layers:
 
 ```
 src/
   <feature>/
-    <feature>.module.ts
-    <feature>.controller.ts
-    <feature>.service.ts
-    <feature>.controller.spec.ts
-    <feature>.service.spec.ts
-    dto/
-    entities/
+    domain/
+      <feature>.entity.ts                      # pure domain model — no framework deps
+      <feature>.repository.ts                  # PORT: abstract class defining the contract
+    application/
+      <feature>.service.ts                     # use cases — imports domain only
+      dto/                                     # input/output contracts (class-validator + Swagger)
+    infrastructure/
+      supabase-<feature>.repository.ts         # ADAPTER: implements the repository port
+      <feature>.controller.ts                  # HTTP adapter (NestJS decorators live here)
+    <feature>.module.ts                        # wires ports to adapters via DI
 ```
 
-- **Controllers** handle HTTP only — no business logic.
-- **Services** own all business logic and database access.
-- **Modules** declare their own providers; import only what they need.
+### Layer rules
+
+- **`domain/`** — zero NestJS or Supabase imports. Plain TypeScript classes and abstract repository contracts.
+- **`application/`** — imports from `domain/` only. Owns all business logic and orchestrates use cases via the repository port.
+- **`infrastructure/`** — the only layer allowed to import NestJS decorators, Supabase client, or other external libs. Contains HTTP controllers and repository adapters.
+- **`<feature>.module.ts`** — binds each port to its adapter:
+  ```ts
+  { provide: FeatureRepository, useClass: SupabaseFeatureRepository }
+  ```
+
+### Key principles
+
+- **Controllers** handle HTTP only — validate input, call the service, return the response.
+- **Services** own all business logic; they depend on repository ports, never on concrete adapters.
+- **Modules** declare their own providers and import only what they need.
 - Use `@nestjs/config` + `.env` for all configuration. Never hardcode secrets.
 
 ## Code conventions
@@ -62,15 +77,19 @@ src/
 
 ## Testing
 
-Every source file must have a companion test file in the same directory:
+Every source file must have a companion test file co-located in the same directory:
 
 ```
-src/users/users.service.ts       → src/users/users.service.test.ts
-src/users/users.controller.ts    → src/users/users.controller.test.ts
+src/users/domain/user.entity.ts                          → user.entity.test.ts
+src/users/application/users.service.ts                   → users.service.test.ts
+src/users/infrastructure/users.controller.ts             → users.controller.test.ts
+src/users/infrastructure/supabase-users.repository.ts    → supabase-users.repository.test.ts
 ```
 
 - **Never create or modify a source file without also creating/updating its `.test.ts` counterpart.**
-- Unit tests: mock the service layer when testing controllers; mock the Supabase client when testing services.
+- Unit tests for **services**: mock the repository port (inject a fake implementing the abstract class).
+- Unit tests for **controllers**: mock the service.
+- Unit tests for **repository adapters**: mock the Supabase client.
 - E2e tests: use a real local Supabase instance (`supabase start` before running `pnpm test:e2e`). E2e specs live under `test/` with the `.e2e-spec.ts` suffix.
 - Aim for branch coverage on service methods; skip trivial pass-through controller tests.
 
