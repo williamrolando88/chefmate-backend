@@ -23,13 +23,47 @@
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+ChefMate backend — NestJS 11 API backed by Supabase (PostgreSQL + Auth).
+
+## Prerequisites
+
+- [Node.js](https://nodejs.org/) 20+
+- [pnpm](https://pnpm.io/)
+- [Supabase CLI](https://supabase.com/docs/guides/cli)
 
 ## Project setup
 
 ```bash
 $ pnpm install
 ```
+
+## Environment variables
+
+Copy `.env.example` to `.env` and fill in the values:
+
+```bash
+$ cp .env.example .env
+```
+
+| Variable | Description |
+|---|---|
+| `SUPABASE_URL` | Supabase project URL (local: `http://127.0.0.1:54321`) |
+| `SUPABASE_ANON_KEY` | Publishable anon key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Secret service-role key — never expose client-side |
+
+## Supabase local stack
+
+Start the local Supabase services (Postgres, Auth, Studio):
+
+```bash
+$ supabase start          # starts local stack; Studio at http://127.0.0.1:54323
+$ supabase stop           # stops the stack
+$ supabase db reset       # re-runs migrations and seed data
+$ supabase migration new <name>   # creates a new migration file
+```
+
+> Credentials for the local stack are printed by `supabase start`. Copy the
+> **Project URL**, **Publishable key**, and **Secret key** into your `.env`.
 
 ## Compile and run the project
 

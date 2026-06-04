@@ -1,0 +1,33 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/opt/homebrew/bin/jq -r '.tool_input.file_path // \"\"' | grep -qE '/src/.*\\.ts$' && /Users/williammorales/.local/share/mise/shims/pnpm tsc --noEmit || true",
+            "statusMessage": "Type-checking..."
+          },
+          {
+            "type": "command",
+            "command": "/opt/homebrew/bin/jq -r '.tool_input.file_path // \"\"' | grep -qE '/src/.*\\.ts$' && /Users/williammorales/.local/share/mise/shims/pnpm lint || true",
+            "statusMessage": "Linting..."
+          },
+          {
+            "type": "command",
+            "command": "/opt/homebrew/bin/jq -r '.tool_input.file_path // \"\"' | grep -qE '/src/.*\\.ts$' && /Users/williammorales/.local/share/mise/shims/pnpm test --passWithNoTests || true",
+            "statusMessage": "Running tests..."
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(pnpm lint)",
+      "Bash(pnpm tsc --noEmit)",
+      "Bash(pnpm test --passWithNoTests)"
+    ]
+  }
+}
