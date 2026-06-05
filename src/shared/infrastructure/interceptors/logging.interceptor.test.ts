@@ -1,5 +1,5 @@
 import { ExecutionContext, Logger } from '@nestjs/common';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { LoggingInterceptor } from './logging.interceptor';
 
 const mockGetRequest = jest
@@ -27,29 +27,37 @@ describe('LoggingInterceptor', () => {
 
   afterEach(() => jest.restoreAllMocks());
 
-  it('logs method, url, status, and duration after the handler resolves', (done) => {
+  it('logs method, url, status, and duration after the handler resolves', () => {
     const next = { handle: () => of({ data: 'ok' }) };
 
-    interceptor.intercept(mockContext, next).subscribe({
-      complete: () => {
-        expect(logSpy).toHaveBeenCalledTimes(1);
-        const message = (logSpy.mock.calls as [string][])[0][0];
-        expect(message).toMatch(/^GET \/health 200 \d+ms$/);
-        done();
-      },
-    });
+    // finalize runs as a teardown after complete — assert after subscribe() returns
+    interceptor.intercept(mockContext, next).subscribe();
+
+    expect(logSpy).toHaveBeenCalledTimes(1);
+    const message = (logSpy.mock.calls as [string][])[0][0];
+    expect(message).toMatch(/^GET \/health 200 \d+ms$/);
   });
 
-  it('does not log request body or authorization headers', (done) => {
+  it('does not log request body or authorization headers', () => {
     const next = { handle: () => of(null) };
 
-    interceptor.intercept(mockContext, next).subscribe({
-      complete: () => {
-        const message = (logSpy.mock.calls as [string][])[0][0];
-        expect(message).not.toContain('authorization');
-        expect(message).not.toContain('body');
-        done();
-      },
-    });
+    interceptor.intercept(mockContext, next).subscribe();
+
+    const message = (logSpy.mock.calls as [string][])[0][0];
+    expect(message).not.toContain('authorization');
+    expect(message).not.toContain('body');
+  });
+
+  it('logs on error paths (4xx/5xx exceptions)', () => {
+    const next = { handle: () => throwError(() => new Error('not found')) };
+
+    // suppress unhandled error; finalize still runs after teardown
+    interceptor
+      .intercept(mockContext, next)
+      .subscribe({ error: () => undefined });
+
+    expect(logSpy).toHaveBeenCalledTimes(1);
+    const message = (logSpy.mock.calls as [string][])[0][0];
+    expect(message).toMatch(/^GET \/health 200 \d+ms$/);
   });
 });

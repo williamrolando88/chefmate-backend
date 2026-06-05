@@ -6,7 +6,12 @@ export class AppConfig {
   constructor(private readonly config: ConfigService) {}
 
   get port(): number {
-    return parseInt(this.config.getOrThrow<string>('PORT'), 10);
+    const raw = this.config.getOrThrow<string>('PORT');
+    const value = parseInt(raw, 10);
+    if (isNaN(value)) {
+      throw new Error(`Invalid PORT value: "${raw}"`);
+    }
+    return value;
   }
 
   get corsOrigins(): string[] {

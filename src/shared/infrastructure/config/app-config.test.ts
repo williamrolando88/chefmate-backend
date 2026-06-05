@@ -21,6 +21,11 @@ describe('AppConfig', () => {
       const cfg = new AppConfig(makeConfig({ CORS_ORIGINS: '' }));
       expect(() => cfg.port).toThrow('Missing env: PORT');
     });
+
+    it('throws when PORT is not a valid number', () => {
+      const cfg = new AppConfig(makeConfig({ PORT: 'abc', CORS_ORIGINS: '' }));
+      expect(() => cfg.port).toThrow('Invalid PORT value: "abc"');
+    });
   });
 
   describe('corsOrigins', () => {
