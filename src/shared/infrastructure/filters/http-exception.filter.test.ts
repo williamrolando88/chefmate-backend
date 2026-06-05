@@ -57,7 +57,7 @@ describe('HttpExceptionFilter', () => {
     );
     filter.catch(exception, mockHost);
 
-    const call = mockJson.mock.calls[0][0] as Record<string, unknown>;
+    const call = (mockJson.mock.calls as [Record<string, unknown>][])[0][0];
     expect(typeof call['timestamp']).toBe('string');
     expect(() => new Date(call['timestamp'] as string)).not.toThrow();
   });

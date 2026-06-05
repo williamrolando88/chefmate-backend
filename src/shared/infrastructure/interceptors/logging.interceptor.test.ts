@@ -33,7 +33,7 @@ describe('LoggingInterceptor', () => {
     interceptor.intercept(mockContext, next).subscribe({
       complete: () => {
         expect(logSpy).toHaveBeenCalledTimes(1);
-        const message = logSpy.mock.calls[0][0] as string;
+        const message = (logSpy.mock.calls as [string][])[0][0];
         expect(message).toMatch(/^GET \/health 200 \d+ms$/);
         done();
       },
@@ -45,7 +45,7 @@ describe('LoggingInterceptor', () => {
 
     interceptor.intercept(mockContext, next).subscribe({
       complete: () => {
-        const message = logSpy.mock.calls[0][0] as string;
+        const message = (logSpy.mock.calls as [string][])[0][0];
         expect(message).not.toContain('authorization');
         expect(message).not.toContain('body');
         done();
