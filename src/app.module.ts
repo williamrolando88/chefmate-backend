@@ -4,6 +4,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { HealthModule } from './health/health.module';
+import { AppConfig } from './shared/infrastructure/config/app-config';
 import { SupabaseModule } from './shared/infrastructure/supabase/supabase.module';
 
 @Module({
@@ -22,6 +23,6 @@ import { SupabaseModule } from './shared/infrastructure/supabase/supabase.module
     }),
     HealthModule,
   ],
-  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }, AppConfig],
 })
 export class AppModule {}
