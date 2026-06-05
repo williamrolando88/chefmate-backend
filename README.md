@@ -27,7 +27,7 @@ ChefMate backend — NestJS 11 API backed by Supabase (PostgreSQL + Auth).
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) 20+
+- [Node.js](https://nodejs.org/) 24
 - [pnpm](https://pnpm.io/)
 - [Supabase CLI](https://supabase.com/docs/guides/cli)
 
