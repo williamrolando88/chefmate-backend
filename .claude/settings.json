@@ -1,0 +1,33 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // \"\"' | grep -qE 'src/.*\\.ts$' && pnpm exec tsc --noEmit || true",
+            "statusMessage": "Type-checking..."
+          },
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // \"\"' | grep -qE 'src/.*\\.ts$' && pnpm lint || true",
+            "statusMessage": "Linting..."
+          },
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // \"\"' | grep -qE 'src/.*\\.ts$' && pnpm test --passWithNoTests || true",
+            "statusMessage": "Running tests..."
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(pnpm lint)",
+      "Bash(pnpm exec tsc --noEmit)",
+      "Bash(pnpm test --passWithNoTests)"
+    ]
+  }
+}
