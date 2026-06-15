@@ -17,25 +17,30 @@ Multi-tenant restaurant management API built on NestJS 11 + Supabase. Serves bot
 
 ---
 
-## Phase 0 — Infrastructure hardening
+## Phase 0 — Infrastructure hardening ✅ Complete
 
 > Goal: every subsequent phase ships on a solid, production-ready base.
 
 ### Tasks
-- [ ] Add `@nestjs/swagger` and expose Swagger UI at `/api/docs`
-- [ ] Configure CORS with explicit origin list (web + mobile domains)
-- [ ] Add `@nestjs/throttler` for global rate limiting (stricter on auth endpoints)
-- [ ] Add a global `HttpExceptionFilter` to normalize all error responses
-- [ ] Add a global `LoggingInterceptor` (request method, path, status, duration — no bodies or tokens)
-- [ ] Replace the `GET /` hello-world with a proper health check (`GET /health`)
-- [ ] Wire `@nestjs/jwt` (needed by Phase 1)
-- [ ] Add `generate:types` script to `package.json` (`supabase gen types typescript`)
+- [x] Add `@nestjs/swagger` and expose Swagger UI at `/api/docs`
+- [x] Configure CORS with explicit origin list (web + mobile domains)
+- [x] Add `@nestjs/throttler` for global rate limiting (stricter on auth endpoints — per-route `@Throttle()` overrides to be applied in Phase 1 when auth routes exist)
+- [x] Add a global `HttpExceptionFilter` to normalize all error responses
+- [x] Add a global `LoggingInterceptor` (request method, path, status, duration — no bodies or tokens)
+- [x] Replace the `GET /` hello-world with a proper health check (`GET /health`)
+- [x] Wire `@nestjs/jwt` configured to verify Supabase-issued JWTs using `SUPABASE_JWT_SECRET`
+- [x] Add `generate:types` script to `package.json` (`supabase gen types typescript`)
 
-**Deliverable:** running `pnpm start:dev` serves `GET /health` and `GET /api/docs` with zero warnings.
+**Deliverable:** running `pnpm start:dev` serves `GET /health` and `GET /api/docs` with zero warnings. ✅
+
+### Implementation notes
+- CORS origins and PORT are managed through `AppConfig` (`src/shared/infrastructure/config/app-config.ts`).
+- `JwtModule` is registered globally; it only verifies tokens — the backend never issues JWTs (Supabase does). `SUPABASE_JWT_SECRET` must match the value in Supabase dashboard → Settings → API → JWT Secret.
+- Global throttle is a flat 100 req / 60 s. Tighter limits on auth/write endpoints will be added via `@Throttle()` overrides when those routes are created in Phase 1.
 
 ---
 
-## Phase 1 — Authentication & Multi-tenancy
+## Phase 1 — Authentication & Multi-tenancy 🔜 Next
 
 > Goal: every protected route knows who the caller is, which org they belong to, and which branch they are acting on.
 
@@ -171,7 +176,7 @@ Multi-tenant restaurant management API built on NestJS 11 + Supabase. Serves bot
 
 ```
 Phase 0  →  Phase 1  →  Phase 2  →  Phase 3
-~1 week      ~2 weeks    ~2 weeks    ~3 weeks
+✅ Done     ~2 weeks    ~2 weeks    ~3 weeks
 ```
 
 Each phase ends with a working, independently testable slice of the API. Phases 2 and 3 can partially overlap once Phase 1's auth infrastructure is stable.
