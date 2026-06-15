@@ -7,11 +7,15 @@ resulting JWT as a signed, self-contained credential and validates it locally �
 API call per request. Org and branch membership are embedded in the JWT as custom claims,
 injected server-side at login time via a Supabase Edge Function hook.
 
+**Current status:** Phase 0 complete. `@nestjs/jwt` is wired and `JwtModule` is registered
+globally using `SUPABASE_JWT_SECRET`. Steps 1–5 below are the immediate next work.
+
 ---
 
 ## Part 1 — Supabase Hook: Custom Claims Injection
 
 **Scope: Supabase (not NestJS backend, not frontend)**
+**Status: ❌ Not started — depends on DB migrations (step 6)**
 
 A PostgreSQL hook (or Edge Function) runs after every successful login and adds `org_id` and
 `branch_id` to the token's `app_metadata`. Because this runs server-side inside Supabase, the
@@ -64,8 +68,9 @@ to the guard lookup later.
 ## Part 2 — Backend: AuthGuard
 
 **Scope: NestJS backend only**
+**Status: ❌ Not started — immediate next step (steps 1–5 are fully independent of DB)**
 
-### New files
+### New files to create
 
 ```
 src/shared/
@@ -78,6 +83,8 @@ src/shared/
     decorators/
       current-user.decorator.ts               # @CurrentUser() param decorator
       current-user.decorator.test.ts
+      public.decorator.ts                     # @Public() opt-out marker
+      public.decorator.test.ts
 ```
 
 ### `user-context.ts`
@@ -95,16 +102,19 @@ export interface UserContext {
 
 ### `auth.guard.ts` logic
 
-1. Extract the `Authorization: Bearer <token>` header. Return `401` if missing.
-2. Verify the JWT signature locally using `SUPABASE_JWT_SECRET` from env (via `@nestjs/jwt`
-   or the `jsonwebtoken` package). Return `401` on invalid signature or expiry.
-3. Read `sub`, `email`, `app_metadata.org_id`, `app_metadata.branch_id` from the decoded
+1. Check for a `IS_PUBLIC_KEY` reflector metadata mark (set by `@Public()`). If present, allow
+   the request through immediately — this covers `GET /health` and future auth callbacks.
+2. Extract the `Authorization: Bearer <token>` header. Return `401` if missing.
+3. Verify the JWT signature locally using `SUPABASE_JWT_SECRET` via `JwtService.verify()`.
+   Return `401` on invalid signature or expiry. `JwtModule` is already configured globally
+   with this secret in `AppModule`.
+4. Read `sub`, `email`, `app_metadata.org_id`, `app_metadata.branch_id` from the decoded
    payload. Return `403` if any required claim is absent.
-4. Attach a `UserContext` object to `request.user`.
-5. Return `true` to allow the request through.
+5. Attach a `UserContext` object to `request.user`.
+6. Return `true` to allow the request through.
 
-No Supabase client call. No database query. The guard depends only on `JwtService` (or raw
-`jsonwebtoken`) and `ConfigService`.
+No Supabase client call. No database query. The guard depends only on `JwtService`
+and `Reflector` (for `@Public()` detection).
 
 ### `current-user.decorator.ts`
 
@@ -115,16 +125,40 @@ export const CurrentUser = createParamDecorator(
 );
 ```
 
-### Registration
+### `public.decorator.ts`
 
-Apply `AuthGuard` globally in `AppModule` via `APP_GUARD` so every route is protected by
-default. Expose a `@Public()` decorator for routes that opt out (e.g., health check).
+```ts
+export const IS_PUBLIC_KEY = 'isPublic';
+export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
+```
 
-### Dependencies to install
+### Registration in `AppModule`
 
-```bash
-pnpm add @nestjs/jwt jsonwebtoken
-pnpm add -D @types/jsonwebtoken
+Replace the current `ThrottlerGuard`-only `APP_GUARD` with two guards in priority order:
+
+```ts
+providers: [
+  { provide: APP_GUARD, useClass: AuthGuard },    // runs first — validates JWT
+  { provide: APP_GUARD, useClass: ThrottlerGuard },
+  AppConfig,
+],
+```
+
+Mark the health check controller (and any future auth callbacks) with `@Public()`:
+
+```ts
+@Public()
+@Controller('health')
+export class HealthController { ... }
+```
+
+### Throttle overrides for auth routes
+
+When auth-adjacent routes are added (invite by email, org creation), apply a stricter throttle:
+
+```ts
+@Throttle({ default: { ttl: 60_000, limit: 10 } })
+@Post('/organizations')
 ```
 
 ---
@@ -132,6 +166,7 @@ pnpm add -D @types/jsonwebtoken
 ## Part 3 — Frontend
 
 **Scope: client application (not this repo)**
+**Status: ❌ Not started — unblocked once backend guard is deployed**
 
 1. Initialize the Supabase JS client with the project URL and anon key.
 2. Call `supabase.auth.signInWithPassword(...)` (or OAuth). Supabase returns an
@@ -148,18 +183,18 @@ pnpm add -D @types/jsonwebtoken
 
 ## Implementation order
 
-| # | Task | Scope |
-|---|------|-------|
-| 1 | Install `@nestjs/jwt`, `jsonwebtoken` | Backend |
-| 2 | Create `UserContext` interface | Backend — domain |
-| 3 | Create `AuthGuard` + tests | Backend — infrastructure |
-| 4 | Create `@CurrentUser()` decorator + tests | Backend — infrastructure |
-| 5 | Register guard globally; add `@Public()` decorator | Backend — AppModule |
-| 6 | Create DB tables (`organizations`, `branches`, `user_memberships`) | Supabase migration |
-| 7 | Write and deploy custom claims Edge Function | Supabase |
-| 8 | Register the auth hook in Supabase | Supabase |
-| 9 | Wire frontend auth flow + token forwarding | Frontend |
+| # | Task | Scope | Status |
+|---|------|-------|--------|
+| 1 | Install `@nestjs/jwt`, `jsonwebtoken` | Backend | ✅ Done |
+| 2 | Create `UserContext` interface | Backend — `shared/domain` | ❌ Todo |
+| 3 | Create `AuthGuard` + tests | Backend — `shared/infrastructure/guards` | ❌ Todo |
+| 4 | Create `@CurrentUser()` decorator + tests | Backend — `shared/infrastructure/decorators` | ❌ Todo |
+| 5 | Create `@Public()` decorator + tests; register `AuthGuard` as `APP_GUARD`; mark health controller `@Public()` | Backend — AppModule | ❌ Todo |
+| 6 | Create DB migrations (`organizations`, `branches`, `memberships`) | Supabase | ❌ Todo |
+| 7 | Write and deploy custom claims Edge Function | Supabase | ❌ Todo |
+| 8 | Register the auth hook in Supabase | Supabase | ❌ Todo |
+| 9 | Wire frontend auth flow + token forwarding | Frontend | ❌ Todo |
 
-Steps 1–5 are fully independent of the DB and can be done right now on this branch.
-Steps 6–8 depend on the DB setup milestone.
+Steps 1–5 are fully independent of the DB and can be done right now.
+Steps 6–8 depend on the DB migration milestone.
 Step 9 is unblocked once the backend guard is deployed.

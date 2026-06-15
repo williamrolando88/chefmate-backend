@@ -55,7 +55,7 @@ Multi-tenant restaurant management API built on NestJS 11 + Supabase. Serves bot
 
 ### Backend
 
-- **Supabase Edge Function hook**: embed `org_id`, `branch_id`, `role` as custom JWT claims (see `docs/auth-implementation-plan.md`)
+- **Supabase Edge Function hook**: embed `org_id`, `branch_id`, `role` as custom JWT claims (see `docs/phase-1-implementation-plan.md`)
 - **`AuthGuard`**: extract Bearer token, call `supabase.auth.getUser()`, inject `UserContext` into request
 - **`@CurrentUser()`** decorator: pulls `UserContext` from the request
 - **`@Public()`** decorator: marks routes that skip the guard
