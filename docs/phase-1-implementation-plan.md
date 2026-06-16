@@ -322,7 +322,7 @@ IDs for scoping.
 | 8 | Create `AuthGuard` + tests | Backend — `shared/infrastructure/guards` | ✅ Done |
 | 9 | Create `@CurrentUser()` decorator + tests | Backend — `shared/infrastructure/decorators` | ✅ Done |
 | 10 | Create `@Public()` decorator + tests | Backend — `shared/infrastructure/decorators` | ✅ Done |
-| 11 | Register `AuthGuard` as `APP_GUARD`; mark `HealthController` `@Public()` | Backend — `AppModule` | ❌ Todo |
+| 11 | Register `AuthGuard` as `APP_GUARD`; mark `HealthController` `@Public()` | Backend — `AppModule` | ✅ Done |
 | 12 | Write + register custom claims Edge Function | Supabase | ❌ Todo |
 | 13 | `UsersModule` (domain → application → infrastructure) | Backend | ❌ Todo |
 | 14 | `OrganizationsModule` | Backend | ❌ Todo |

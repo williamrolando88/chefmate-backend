@@ -3,7 +3,7 @@ import { ROUTE_ARGS_METADATA } from '@nestjs/common/constants';
 import { UserContext } from '../../domain/user-context';
 import { CurrentUser } from './current-user.decorator';
 
-function extractFactory(decorator: (...args: unknown[]) => unknown) {
+function extractFactory(decorator: () => ParameterDecorator) {
   class Target {
     handler(@decorator() _value: unknown) {}
   }
