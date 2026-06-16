@@ -101,7 +101,7 @@ src/users/infrastructure/supabase-users.repository.ts    → supabase-users.repo
 
 - **Never create or modify a source file without also creating/updating its `.test.ts` counterpart.**
 - Unit tests for **services**: mock the repository port (inject a fake implementing the abstract class).
-- Unit tests for **controllers**: mock the service.
+- Unit tests for **controllers**: mock the service with a plain object declared outside `describe` — never use `jest.Mocked<T>` as a variable type; it triggers the `unbound-method` lint rule. Always add `afterEach(() => jest.clearAllMocks())`.
 - Unit tests for **repository adapters**: mock the Supabase client.
 - E2e tests: use a real local Supabase instance (`supabase start` before running `pnpm test:e2e`). E2e specs live under `test/` with the `.e2e-spec.ts` suffix.
 - Aim for branch coverage on service methods; skip trivial pass-through controller tests.
