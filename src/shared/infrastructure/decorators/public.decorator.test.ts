@@ -14,9 +14,11 @@ describe('Public decorator', () => {
       handler() {}
     }
 
-    expect(
-      Reflect.getMetadata(IS_PUBLIC_KEY, TestController.prototype.handler),
-    ).toBe(true);
+    const handlerFn = Object.getOwnPropertyDescriptor(
+      TestController.prototype,
+      'handler',
+    )?.value as () => void;
+    expect(Reflect.getMetadata(IS_PUBLIC_KEY, handlerFn)).toBe(true);
   });
 
   it('exports IS_PUBLIC_KEY as "isPublic"', () => {
