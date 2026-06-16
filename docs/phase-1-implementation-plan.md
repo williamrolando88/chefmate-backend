@@ -317,8 +317,8 @@ IDs for scoping.
 | 3 | `supabase migration new create_profiles` — write + apply | Supabase | ✅ Done |
 | 4 | `supabase migration new create_memberships` — write + apply | Supabase | ✅ Done |
 | 5 | `pnpm gen:types` — regenerate `database.types.ts` | Backend | ✅ Done |
-| 6 | Create `supabase/seed.sql` with one org, two branches, five users (one per role) | Supabase | ❌ Todo |
-| 7 | Create `MembershipRole` type + `UserContext` interface | Backend — `shared/domain` | ❌ Todo |
+| 6 | Create `supabase/seed.sql` with one org, two branches, five users (one per role) | Supabase | ✅ Done |
+| 7 | Create `MembershipRole` type + `UserContext` interface | Backend — `shared/domain` | ✅ Done |
 | 8 | Create `AuthGuard` + tests | Backend — `shared/infrastructure/guards` | ❌ Todo |
 | 9 | Create `@CurrentUser()` decorator + tests | Backend — `shared/infrastructure/decorators` | ❌ Todo |
 | 10 | Create `@Public()` decorator + tests | Backend — `shared/infrastructure/decorators` | ❌ Todo |
