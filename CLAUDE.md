@@ -106,6 +106,28 @@ src/users/infrastructure/supabase-users.repository.ts    → supabase-users.repo
 - E2e tests: use a real local Supabase instance (`supabase start` before running `pnpm test:e2e`). E2e specs live under `test/` with the `.e2e-spec.ts` suffix.
 - Aim for branch coverage on service methods; skip trivial pass-through controller tests.
 
+## Authorization
+
+`AuthGuard` handles **authentication only** — it verifies the JWT signature and expiry, checks that all required claims are present, and attaches a typed `UserContext` to the request. It knows nothing about what the caller is trying to do.
+
+**All authorization logic lives in the service layer.** Every service method that acts on a resource must follow this pattern:
+
+1. **Scope queries to the caller's org.** Use `userContext.orgId` (injected via `@CurrentUser()`) as the filter — never trust an org ID supplied by the client. Same rule applies to `userContext.branchId` for branch-scoped resources.
+2. **Enforce role requirements before touching the repository.** Check `userContext.role` at the top of the method and throw `ForbiddenException` if the role is insufficient.
+3. **Never put role or org checks in a controller.** Controllers validate input shape and delegate to the service — access control is not their responsibility.
+
+```ts
+// Correct pattern in a service method
+async createBranch(dto: CreateBranchDto, userContext: UserContext): Promise<Branch> {
+  if (!['owner', 'admin'].includes(userContext.role)) {
+    throw new ForbiddenException();
+  }
+  return this.branchRepository.create({ ...dto, orgId: userContext.orgId });
+}
+```
+
+Do not rely on Supabase RLS as a substitute for these checks — the backend uses the service-role key, which bypasses RLS entirely.
+
 ## Security checklist
 
 - All routes that require authentication must use a JWT guard (`@UseGuards(AuthGuard)`).

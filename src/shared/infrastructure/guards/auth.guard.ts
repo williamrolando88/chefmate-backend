@@ -13,9 +13,7 @@ import {
   MembershipRole,
   UserContext,
 } from '../../domain/user-context';
-
-// Matches the key exported by @Public() in public.decorator.ts
-const IS_PUBLIC_KEY = 'isPublic';
+import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 const VALID_ROLES = new Set<MembershipRole>([...MEMBERSHIP_ROLES]);
 

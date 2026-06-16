@@ -320,8 +320,8 @@ IDs for scoping.
 | 6 | Create `supabase/seed.sql` with one org, two branches, five users (one per role) | Supabase | ✅ Done |
 | 7 | Create `MembershipRole` type + `UserContext` interface | Backend — `shared/domain` | ✅ Done |
 | 8 | Create `AuthGuard` + tests | Backend — `shared/infrastructure/guards` | ✅ Done |
-| 9 | Create `@CurrentUser()` decorator + tests | Backend — `shared/infrastructure/decorators` | ❌ Todo |
-| 10 | Create `@Public()` decorator + tests | Backend — `shared/infrastructure/decorators` | ❌ Todo |
+| 9 | Create `@CurrentUser()` decorator + tests | Backend — `shared/infrastructure/decorators` | ✅ Done |
+| 10 | Create `@Public()` decorator + tests | Backend — `shared/infrastructure/decorators` | ✅ Done |
 | 11 | Register `AuthGuard` as `APP_GUARD`; mark `HealthController` `@Public()` | Backend — `AppModule` | ❌ Todo |
 | 12 | Write + register custom claims Edge Function | Supabase | ❌ Todo |
 | 13 | `UsersModule` (domain → application → infrastructure) | Backend | ❌ Todo |
