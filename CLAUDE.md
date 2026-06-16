@@ -29,12 +29,13 @@ Follow a **pragmatic ports-and-adapters** (hexagonal) layout. Every domain lives
 ```
 src/
   shared/
-    infrastructure/
+    adapters/
       supabase/
         supabase.module.ts        # @Global() — imported once in AppModule
         supabase.service.ts       # wraps the Supabase JS client
       guards/
         auth.guard.ts             # JWT guard shared across features
+      decorators/                 # @CurrentUser(), @Public()
       filters/                    # global exception filters
       interceptors/               # global interceptors
     domain/                       # shared value objects / base types (if needed)
@@ -45,20 +46,22 @@ src/
     application/
       <feature>.service.ts                     # use cases — imports domain only
       dto/                                     # input/output contracts (class-validator + Swagger)
-    infrastructure/
-      supabase-<feature>.repository.ts         # ADAPTER: implements the repository port
-      <feature>.controller.ts                  # HTTP adapter (NestJS decorators live here)
+    adapters/
+      http/
+        <feature>.controller.ts               # driving adapter — translates HTTP into service calls
+      persistence/
+        supabase-<feature>.repository.ts      # driven adapter — implements the repository port
     <feature>.module.ts                        # wires ports to adapters via DI
 ```
 
-`shared/` is the only place for cross-cutting infrastructure. Never put shared concerns directly inside a feature folder.
+`shared/` is the only place for cross-cutting adapters. Never put shared concerns directly inside a feature folder.
 
 ### Layer rules
 
 - **`domain/`** — zero NestJS or Supabase imports. Plain TypeScript classes and abstract repository contracts.
 - **`application/`** — imports from `domain/` only. Owns all business logic and orchestrates use cases via the repository port.
-- **`infrastructure/`** — the only layer allowed to import NestJS decorators, Supabase client, or other external libs. Contains HTTP controllers and repository adapters.
-- **`<feature>.module.ts`** — binds each port to its adapter:
+- **`adapters/`** — the only layer allowed to import NestJS decorators, Supabase client, or other external libs. Split into `adapters/http/` (driving — controllers) and `adapters/persistence/` (driven — repository implementations). If a new driven adapter type is added (e.g. email, queues), give it its own subdirectory named after what it **does**, not the technology: `adapters/notifications/`, not `adapters/sendgrid/`.
+- **`<feature>.module.ts`** — binds each port to its adapter and registers the controller:
   ```ts
   { provide: FeatureRepository, useClass: SupabaseFeatureRepository }
   ```
@@ -92,11 +95,11 @@ src/
 Every source file must have a companion test file co-located in the same directory:
 
 ```
-src/shared/infrastructure/supabase/supabase.service.ts   → supabase.service.test.ts
-src/users/domain/user.entity.ts                          → user.entity.test.ts
-src/users/application/users.service.ts                   → users.service.test.ts
-src/users/infrastructure/users.controller.ts             → users.controller.test.ts
-src/users/infrastructure/supabase-users.repository.ts    → supabase-users.repository.test.ts
+src/shared/adapters/supabase/supabase.service.ts              → supabase.service.test.ts
+src/users/domain/user.entity.ts                               → user.entity.test.ts
+src/users/application/users.service.ts                        → users.service.test.ts
+src/users/adapters/http/users.controller.ts                   → users.controller.test.ts
+src/users/adapters/persistence/supabase-users.repository.ts   → supabase-users.repository.test.ts
 ```
 
 - **Never create or modify a source file without also creating/updating its `.test.ts` counterpart.**

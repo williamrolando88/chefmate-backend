@@ -1,7 +1,10 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { SupabaseService } from '../../shared/infrastructure/supabase/supabase.service';
-import { UserProfile } from '../domain/user.entity';
-import { UpdateProfileData, UserRepository } from '../domain/user.repository';
+import { SupabaseService } from '../../../shared/adapters/supabase/supabase.service';
+import { UserProfile } from '../../domain/user.entity';
+import {
+  UpdateProfileData,
+  UserRepository,
+} from '../../domain/user.repository';
 
 @Injectable()
 export class SupabaseUsersRepository extends UserRepository {

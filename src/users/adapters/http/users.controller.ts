@@ -7,11 +7,11 @@ import {
   Patch,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { UserContext } from '../../shared/domain/user-context';
-import { CurrentUser } from '../../shared/infrastructure/decorators/current-user.decorator';
-import { UpdateUserDto } from '../application/dto/update-user.dto';
-import { UserResponseDto } from '../application/dto/user-response.dto';
-import { UsersService } from '../application/users.service';
+import type { UserContext } from '../../../shared/domain/user-context';
+import { CurrentUser } from '../../../shared/adapters/decorators/current-user.decorator';
+import { UpdateUserDto } from '../../application/dto/update-user.dto';
+import { UserResponseDto } from '../../application/dto/user-response.dto';
+import { UsersService } from '../../application/users.service';
 
 @ApiTags('users')
 @ApiBearerAuth()

@@ -8,7 +8,7 @@ export default tseslint.config(
   {
     ignores: [
       'eslint.config.mjs',
-      'src/shared/infrastructure/supabase/database.types.ts',
+      'src/shared/adapters/supabase/database.types.ts',
     ],
   },
   eslint.configs.recommended,

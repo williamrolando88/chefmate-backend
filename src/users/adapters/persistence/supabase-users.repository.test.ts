@@ -1,8 +1,8 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { Database } from '../../shared/infrastructure/supabase/database.types';
-import { SupabaseService } from '../../shared/infrastructure/supabase/supabase.service';
+import { Database } from '../../../shared/adapters/supabase/database.types';
+import { SupabaseService } from '../../../shared/adapters/supabase/supabase.service';
 import { SupabaseUsersRepository } from './supabase-users.repository';
 
 const profileRow = {

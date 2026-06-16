@@ -5,9 +5,9 @@ import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { HealthModule } from './health/health.module';
 import { UsersModule } from './users/users.module';
-import { AppConfig } from './shared/infrastructure/config/app-config';
-import { AuthGuard } from './shared/infrastructure/guards/auth.guard';
-import { SupabaseModule } from './shared/infrastructure/supabase/supabase.module';
+import { AppConfig } from './shared/adapters/config/app-config';
+import { AuthGuard } from './shared/adapters/guards/auth.guard';
+import { SupabaseModule } from './shared/adapters/supabase/supabase.module';
 
 @Module({
   imports: [

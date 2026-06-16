@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Public } from '../shared/infrastructure/decorators/public.decorator';
+import { Public } from '../shared/adapters/decorators/public.decorator';
 import { HealthResponseDto } from './dto/health-response.dto';
 
 @Public()

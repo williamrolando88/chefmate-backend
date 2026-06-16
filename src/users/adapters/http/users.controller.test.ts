@@ -1,7 +1,7 @@
 import { Test } from '@nestjs/testing';
-import { UserContext } from '../../shared/domain/user-context';
-import { UserResponseDto } from '../application/dto/user-response.dto';
-import { UsersService } from '../application/users.service';
+import { UserContext } from '../../../shared/domain/user-context';
+import { UserResponseDto } from '../../application/dto/user-response.dto';
+import { UsersService } from '../../application/users.service';
 import { UsersController } from './users.controller';
 
 const mockUser: UserContext = {
