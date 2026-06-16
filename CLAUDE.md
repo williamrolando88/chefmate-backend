@@ -83,7 +83,7 @@ src/
 
 - Access Supabase via the `@supabase/supabase-js` client wrapped in `src/shared/infrastructure/supabase/supabase.service.ts`. Import `SupabaseModule` in `AppModule` only — it is `@Global()` so feature modules do not need to re-import it.
 - The backend uses the service-role key and owns all authorization in the NestJS service layer. Feature services must enforce access control explicitly; do not rely on Supabase RLS as a primary guard.
-- Migrations live in `supabase/migrations/`. Always generate them with `supabase migration new` rather than editing manually.
+- Migrations live in `supabase/migrations/`. **Always create migration files with `supabase migration new <name>`** — never create or rename them manually. The CLI assigns the correct timestamp; hand-crafted filenames will be out of sequence and break `supabase db reset`.
 - Seed data goes in `supabase/seed.sql`.
 - Never commit the service role key; load it from env (`SUPABASE_SERVICE_ROLE_KEY`).
 

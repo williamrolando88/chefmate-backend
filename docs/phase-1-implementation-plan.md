@@ -120,7 +120,7 @@ with representative local-dev data:
 ## Part 2 — Supabase Custom Claims Hook
 
 **Scope: Supabase (not NestJS backend)**
-**Status: ❌ Not started — depends on Part 1 migrations**
+**Status: ✅ Done**
 
 A PostgreSQL function runs after every successful login and token refresh. It reads the user's
 membership record and adds `org_id`, `branch_id`, and `role` to `app_metadata`. Because this
@@ -323,7 +323,7 @@ IDs for scoping.
 | 9 | Create `@CurrentUser()` decorator + tests | Backend — `shared/infrastructure/decorators` | ✅ Done |
 | 10 | Create `@Public()` decorator + tests | Backend — `shared/infrastructure/decorators` | ✅ Done |
 | 11 | Register `AuthGuard` as `APP_GUARD`; mark `HealthController` `@Public()` | Backend — `AppModule` | ✅ Done |
-| 12 | Write + register custom claims Edge Function | Supabase | ❌ Todo |
+| 12 | Write + register custom claims Edge Function | Supabase | ✅ Done |
 | 13 | `UsersModule` (domain → application → infrastructure) | Backend | ❌ Todo |
 | 14 | `OrganizationsModule` | Backend | ❌ Todo |
 | 15 | `BranchesModule` | Backend | ❌ Todo |
