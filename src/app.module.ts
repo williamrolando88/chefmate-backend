@@ -16,8 +16,7 @@ import { SupabaseModule } from './shared/infrastructure/supabase/supabase.module
       global: true,
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => ({
-        secret: config.getOrThrow<string>('JWT_SECRET'),
-        signOptions: { expiresIn: '7d' },
+        secret: config.getOrThrow<string>('SUPABASE_JWT_SECRET'),
       }),
       inject: [ConfigService],
     }),

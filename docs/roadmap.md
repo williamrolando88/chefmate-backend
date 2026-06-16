@@ -17,57 +17,82 @@ Multi-tenant restaurant management API built on NestJS 11 + Supabase. Serves bot
 
 ---
 
-## Phase 0 — Infrastructure hardening
+## Phase 0 — Infrastructure hardening ✅ Complete
 
 > Goal: every subsequent phase ships on a solid, production-ready base.
 
 ### Tasks
-- [ ] Add `@nestjs/swagger` and expose Swagger UI at `/api/docs`
-- [ ] Configure CORS with explicit origin list (web + mobile domains)
-- [ ] Add `@nestjs/throttler` for global rate limiting (stricter on auth endpoints)
-- [ ] Add a global `HttpExceptionFilter` to normalize all error responses
-- [ ] Add a global `LoggingInterceptor` (request method, path, status, duration — no bodies or tokens)
-- [ ] Replace the `GET /` hello-world with a proper health check (`GET /health`)
-- [ ] Wire `@nestjs/jwt` (needed by Phase 1)
-- [ ] Add `generate:types` script to `package.json` (`supabase gen types typescript`)
+- [x] Add `@nestjs/swagger` and expose Swagger UI at `/api/docs`
+- [x] Configure CORS with explicit origin list (web + mobile domains)
+- [x] Add `@nestjs/throttler` for global rate limiting (per-route `@Throttle()` overrides applied in Phase 1 when write/invite routes exist)
+- [x] Add a global `HttpExceptionFilter` to normalize all error responses
+- [x] Add a global `LoggingInterceptor` (request method, path, status, duration — no bodies or tokens)
+- [x] Replace the `GET /` hello-world with a proper health check (`GET /health`)
+- [x] Wire `@nestjs/jwt` configured to verify Supabase-issued JWTs using `SUPABASE_JWT_SECRET`
+- [x] Add `generate:types` script to `package.json` (`supabase gen types typescript`)
 
-**Deliverable:** running `pnpm start:dev` serves `GET /health` and `GET /api/docs` with zero warnings.
+**Deliverable:** running `pnpm start:dev` serves `GET /health` and `GET /api/docs` with zero warnings. ✅
+
+### Implementation notes
+- CORS origins and PORT are managed through `AppConfig` (`src/shared/infrastructure/config/app-config.ts`).
+- `JwtModule` is registered globally and only **verifies** tokens — the backend never issues JWTs (Supabase does). `SUPABASE_JWT_SECRET` must match Supabase dashboard → Settings → API → JWT Secret.
+- Global throttle is a flat 100 req / 60 s. Tighter limits on write/invite endpoints will be applied via `@Throttle()` overrides in Phase 1.
 
 ---
 
-## Phase 1 — Authentication & Multi-tenancy
+## Phase 1 — Authentication & Multi-tenancy 🔜 Next
 
 > Goal: every protected route knows who the caller is, which org they belong to, and which branch they are acting on.
 
+See `docs/phase-1-implementation-plan.md` for the full step-by-step plan.
+
 ### Database migrations
 
-| Migration | Tables |
-|-----------|--------|
-| `create_profiles` | `profiles (id → auth.users, full_name, avatar_url, created_at)` |
-| `create_organizations` | `organizations (id, name, slug, created_at)` |
-| `create_branches` | `branches (id, org_id → organizations, name, address, created_at)` |
-| `create_memberships` | `memberships (user_id → auth.users, org_id, branch_id, role: enum[owner, admin, chef, viewer], created_at)` |
+Migrations must be created and applied in this order due to FK dependencies:
+
+| Order | Migration name | Key columns |
+|-------|----------------|-------------|
+| 1 | `create_organizations` | `id uuid PK`, `tax_id text NN UNIQUE`, `name text NN`, `slug text NN UNIQUE`, `created_at`, `updated_at` |
+| 2 | `create_branches` | `id uuid PK`, `org_id → organizations CASCADE`, `code integer NN CHECK(>0) UNIQUE(org_id,code)`, `name text NN`, `address text NULL`, `created_at`, `updated_at` |
+| 3 | `create_profiles` | `id uuid PK → auth.users CASCADE`, `first_name text NULL`, `last_name text NULL`, `avatar_url text NULL`, `created_at`, `updated_at` |
+| 4 | `create_memberships` | `id uuid PK`, `user_id → auth.users CASCADE UNIQUE`, `org_id → organizations CASCADE`, `branch_id → branches SET NULL NULL`, `role text NN`, `created_at`, `updated_at` |
+
+**Schema decisions:**
+- `tax_id` is the deduplication key for organizations — globally unique, NOT NULL, and immutable after creation (enforced in service layer). Analogous to email uniqueness in `auth.users`.
+- `branches.code` is the invoicing identifier scoped to the org — unique within the org, NOT NULL, positive integer, immutable after creation. The frontend formats it as `001`, `002`, etc.
+- `branch_id` is nullable in `memberships`: `NULL` = org-level access (owner, admin); non-null = branch-scoped (chef, waiter, cashier).
+- `user_id` has a `UNIQUE` constraint in `memberships`: one user belongs to exactly one organization. Email uniqueness is enforced natively by Supabase Auth.
+- `role` is `text NOT NULL` — validated in the business layer, not via a DB enum, to allow future custom roles without schema changes.
+- `ON DELETE SET NULL` on `memberships.branch_id`: deleting a branch downgrades the user to org-level access rather than deleting the membership.
+- `updated_at` on all tables — driven by a trigger or manual update in the migration.
+
+### Default roles
+
+`owner` · `admin` · `chef` · `waiter` · `cashier`
+
+Defined as a TypeScript union type in the domain layer. The DB column is plain `text` to allow future org-defined custom roles without a migration.
 
 ### Backend
 
-- **Supabase Edge Function hook**: embed `org_id`, `branch_id`, `role` as custom JWT claims (see `docs/auth-implementation-plan.md`)
-- **`AuthGuard`**: extract Bearer token, call `supabase.auth.getUser()`, inject `UserContext` into request
+- **Supabase Edge Function hook**: on every login/token refresh, queries `memberships` and embeds `org_id`, `branch_id` (nullable), and `role` as custom claims in `app_metadata`
+- **`AuthGuard`**: verifies Bearer JWT locally using `JwtService` (no Supabase API call per request), extracts claims, attaches `UserContext` to the request
 - **`@CurrentUser()`** decorator: pulls `UserContext` from the request
-- **`@Public()`** decorator: marks routes that skip the guard
+- **`@Public()`** decorator: marks routes that skip the guard (health check, future auth callbacks)
 - **`UsersModule`**
   - `GET /users/me` — return profile + membership summary
-  - `PATCH /users/me` — update profile fields
+  - `PATCH /users/me` — update `first_name`, `last_name`, `avatar_url`
 - **`OrganizationsModule`**
-  - `POST /organizations` — create org (owner role auto-assigned)
+  - `POST /organizations` — create org + auto-assign `owner` membership to caller
   - `GET /organizations/:id`
-  - `PATCH /organizations/:id` (owner/admin only)
+  - `PATCH /organizations/:id` — update `name`, `slug` only; `tax_id` is immutable (owner/admin)
 - **`BranchesModule`**
   - `POST /organizations/:orgId/branches`
   - `GET /organizations/:orgId/branches`
-  - `PATCH /organizations/:orgId/branches/:id`
+  - `PATCH /organizations/:orgId/branches/:id` — update `name`, `address` only; `code` is immutable (owner/admin)
 - **`MembershipsModule`**
-  - `POST /organizations/:orgId/members` — invite user by email
-  - `DELETE /organizations/:orgId/members/:userId` — remove member
+  - `POST /organizations/:orgId/members` — invite user by email (owner/admin)
+  - `PATCH /organizations/:orgId/members/:userId` — change role (owner/admin)
+  - `DELETE /organizations/:orgId/members/:userId` — remove member (owner/admin)
 
 **Deliverable:** all routes protected by default; role-based access enforced in service layer; Swagger shows auth headers.
 
@@ -144,7 +169,7 @@ Multi-tenant restaurant management API built on NestJS 11 + Supabase. Serves bot
 ### Security
 - All routes require `AuthGuard` by default; use `@Public()` only for auth callbacks and health checks
 - Enforce `org_id` / `branch_id` scoping in every service method — never trust client-supplied IDs for scoping
-- Use `@nestjs/throttler` with tighter limits on auth and write endpoints
+- Use `@nestjs/throttler` with tighter limits on write and invite endpoints
 - Never log request bodies or JWT payloads
 
 ### Testing
@@ -171,7 +196,7 @@ Multi-tenant restaurant management API built on NestJS 11 + Supabase. Serves bot
 
 ```
 Phase 0  →  Phase 1  →  Phase 2  →  Phase 3
-~1 week      ~2 weeks    ~2 weeks    ~3 weeks
+✅ Done     ~2 weeks    ~2 weeks    ~3 weeks
 ```
 
 Each phase ends with a working, independently testable slice of the API. Phases 2 and 3 can partially overlap once Phase 1's auth infrastructure is stable.
