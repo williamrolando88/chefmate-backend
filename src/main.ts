@@ -1,9 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { setupApp } from './shared/infrastructure/app.setup';
-import { AppConfig } from './shared/infrastructure/config/app-config';
-import { setupCors } from './shared/infrastructure/cors/cors.setup';
-import { setupSwagger } from './shared/infrastructure/swagger/swagger.setup';
+import { setupApp } from './shared/adapters/app.setup';
+import { AppConfig } from './shared/adapters/config/app-config';
+import { setupCors } from './shared/adapters/cors/cors.setup';
+import { setupSwagger } from './shared/adapters/swagger/swagger.setup';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

@@ -120,7 +120,7 @@ with representative local-dev data:
 ## Part 2 — Supabase Custom Claims Hook
 
 **Scope: Supabase (not NestJS backend)**
-**Status: ❌ Not started — depends on Part 1 migrations**
+**Status: ✅ Done**
 
 A PostgreSQL function runs after every successful login and token refresh. It reads the user's
 membership record and adds `org_id`, `branch_id`, and `role` to `app_metadata`. Because this
@@ -317,14 +317,14 @@ IDs for scoping.
 | 3 | `supabase migration new create_profiles` — write + apply | Supabase | ✅ Done |
 | 4 | `supabase migration new create_memberships` — write + apply | Supabase | ✅ Done |
 | 5 | `pnpm gen:types` — regenerate `database.types.ts` | Backend | ✅ Done |
-| 6 | Create `supabase/seed.sql` with one org, two branches, five users (one per role) | Supabase | ❌ Todo |
-| 7 | Create `MembershipRole` type + `UserContext` interface | Backend — `shared/domain` | ❌ Todo |
-| 8 | Create `AuthGuard` + tests | Backend — `shared/infrastructure/guards` | ❌ Todo |
-| 9 | Create `@CurrentUser()` decorator + tests | Backend — `shared/infrastructure/decorators` | ❌ Todo |
-| 10 | Create `@Public()` decorator + tests | Backend — `shared/infrastructure/decorators` | ❌ Todo |
-| 11 | Register `AuthGuard` as `APP_GUARD`; mark `HealthController` `@Public()` | Backend — `AppModule` | ❌ Todo |
-| 12 | Write + register custom claims Edge Function | Supabase | ❌ Todo |
-| 13 | `UsersModule` (domain → application → infrastructure) | Backend | ❌ Todo |
+| 6 | Create `supabase/seed.sql` with one org, two branches, five users (one per role) | Supabase | ✅ Done |
+| 7 | Create `MembershipRole` type + `UserContext` interface | Backend — `shared/domain` | ✅ Done |
+| 8 | Create `AuthGuard` + tests | Backend — `shared/infrastructure/guards` | ✅ Done |
+| 9 | Create `@CurrentUser()` decorator + tests | Backend — `shared/infrastructure/decorators` | ✅ Done |
+| 10 | Create `@Public()` decorator + tests | Backend — `shared/infrastructure/decorators` | ✅ Done |
+| 11 | Register `AuthGuard` as `APP_GUARD`; mark `HealthController` `@Public()` | Backend — `AppModule` | ✅ Done |
+| 12 | Write + register custom claims Edge Function | Supabase | ✅ Done |
+| 13 | `UsersModule` (domain → application → infrastructure) | Backend | ✅ Done |
 | 14 | `OrganizationsModule` | Backend | ❌ Todo |
 | 15 | `BranchesModule` | Backend | ❌ Todo |
 | 16 | `MembershipsModule` | Backend | ❌ Todo |

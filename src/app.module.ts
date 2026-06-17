@@ -4,8 +4,10 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { HealthModule } from './health/health.module';
-import { AppConfig } from './shared/infrastructure/config/app-config';
-import { SupabaseModule } from './shared/infrastructure/supabase/supabase.module';
+import { UsersModule } from './users/users.module';
+import { AppConfig } from './shared/adapters/config/app-config';
+import { AuthGuard } from './shared/adapters/guards/auth.guard';
+import { SupabaseModule } from './shared/adapters/supabase/supabase.module';
 
 @Module({
   imports: [
@@ -21,7 +23,12 @@ import { SupabaseModule } from './shared/infrastructure/supabase/supabase.module
       inject: [ConfigService],
     }),
     HealthModule,
+    UsersModule,
   ],
-  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }, AppConfig],
+  providers: [
+    { provide: APP_GUARD, useClass: AuthGuard },
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    AppConfig,
+  ],
 })
 export class AppModule {}
