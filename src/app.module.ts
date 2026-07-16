@@ -4,6 +4,8 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { HealthModule } from './health/health.module';
+import { OnboardingModule } from './onboarding/onboarding.module';
+import { OrganizationsModule } from './organizations/organizations.module';
 import { UsersModule } from './users/users.module';
 import { AppConfig } from './shared/adapters/config/app-config';
 import { AuthGuard } from './shared/adapters/guards/auth.guard';
@@ -24,6 +26,8 @@ import { SupabaseModule } from './shared/adapters/supabase/supabase.module';
     }),
     HealthModule,
     UsersModule,
+    OrganizationsModule,
+    OnboardingModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: AuthGuard },

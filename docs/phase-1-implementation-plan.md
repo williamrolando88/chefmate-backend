@@ -325,7 +325,8 @@ IDs for scoping.
 | 11 | Register `AuthGuard` as `APP_GUARD`; mark `HealthController` `@Public()` | Backend — `AppModule` | ✅ Done |
 | 12 | Write + register custom claims Edge Function | Supabase | ✅ Done |
 | 13 | `UsersModule` (domain → application → infrastructure) | Backend | ✅ Done |
-| 14 | `OrganizationsModule` | Backend | ❌ Todo |
+| 14 | `OrganizationsModule` | Backend | ✅ Done |
+| 14b | `OnboardingModule` — `POST /onboarding` (org + branch + membership in one call) | Backend | ✅ Done |
 | 15 | `BranchesModule` | Backend | ❌ Todo |
 | 16 | `MembershipsModule` | Backend | ❌ Todo |
 

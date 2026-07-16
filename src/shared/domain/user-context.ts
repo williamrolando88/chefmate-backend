@@ -14,3 +14,8 @@ export interface UserContext {
   branchId: string | null;
   role: MembershipRole;
 }
+
+export interface BootstrapUserContext {
+  userId: string;
+  email: string;
+}

@@ -9,10 +9,12 @@ import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import {
+  BootstrapUserContext,
   MEMBERSHIP_ROLES,
   MembershipRole,
   UserContext,
 } from '../../domain/user-context';
+import { IS_NO_ORG_REQUIRED_KEY } from '../decorators/no-org-required.decorator';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 const VALID_ROLES = new Set<MembershipRole>([...MEMBERSHIP_ROLES]);
@@ -36,6 +38,19 @@ export class AuthGuard implements CanActivate {
     if (!token) throw new UnauthorizedException();
 
     const payload = this.verifyToken(token);
+
+    const isNoOrgRequired = this.reflector.getAllAndOverride<boolean>(
+      IS_NO_ORG_REQUIRED_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+
+    if (isNoOrgRequired) {
+      (
+        request as Request & { bootstrapUser: BootstrapUserContext }
+      ).bootstrapUser = this.toBootstrapContext(payload);
+      return true;
+    }
+
     (request as Request & { user: UserContext }).user =
       this.toUserContext(payload);
     return true;
@@ -53,6 +68,17 @@ export class AuthGuard implements CanActivate {
     } catch {
       throw new UnauthorizedException();
     }
+  }
+
+  private toBootstrapContext(
+    payload: Record<string, unknown>,
+  ): BootstrapUserContext {
+    const userId = payload['sub'];
+    const email = payload['email'];
+    if (typeof userId !== 'string' || typeof email !== 'string') {
+      throw new ForbiddenException();
+    }
+    return { userId, email };
   }
 
   private toUserContext(payload: Record<string, unknown>): UserContext {

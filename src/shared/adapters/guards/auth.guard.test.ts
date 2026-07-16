@@ -5,17 +5,26 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
-import { UserContext } from '../../domain/user-context';
+import { BootstrapUserContext, UserContext } from '../../domain/user-context';
 import { AuthGuard } from './auth.guard';
 
-function makeContext(headers: Record<string, string> = {}, isPublic = false) {
+function makeContext(
+  headers: Record<string, string> = {},
+  flags: { isPublic?: boolean; isNoOrgRequired?: boolean } = {},
+) {
   const reflector = {
-    getAllAndOverride: jest.fn().mockReturnValue(isPublic),
+    getAllAndOverride: jest.fn().mockImplementation((key: string) => {
+      if (key === 'isPublic') return flags.isPublic ?? false;
+      if (key === 'isNoOrgRequired') return flags.isNoOrgRequired ?? false;
+      return false;
+    }),
   } as unknown as Reflector;
 
-  const request: { headers: Record<string, string>; user?: UserContext } = {
-    headers,
-  };
+  const request: {
+    headers: Record<string, string>;
+    user?: UserContext;
+    bootstrapUser?: BootstrapUserContext;
+  } = { headers };
 
   const ctx = {
     getHandler: jest.fn(),
@@ -35,7 +44,7 @@ describe('AuthGuard', () => {
   });
 
   it('allows public routes without a token', () => {
-    const { ctx, reflector } = makeContext({}, true);
+    const { ctx, reflector } = makeContext({}, { isPublic: true });
     const guard = new AuthGuard(mockJwtService, reflector);
     expect(guard.canActivate(ctx)).toBe(true);
   });
@@ -74,10 +83,7 @@ describe('AuthGuard', () => {
   });
 
   it('throws 403 when app_metadata is missing entirely', () => {
-    mockVerify.mockReturnValue({
-      sub: 'u1',
-      email: 'u@example.com',
-    });
+    mockVerify.mockReturnValue({ sub: 'u1', email: 'u@example.com' });
     const { ctx, reflector } = makeContext({ authorization: 'Bearer token' });
     const guard = new AuthGuard(mockJwtService, reflector);
     expect(() => guard.canActivate(ctx)).toThrow(ForbiddenException);
@@ -160,4 +166,38 @@ describe('AuthGuard', () => {
       expect(guard.canActivate(ctx)).toBe(true);
     },
   );
+
+  describe('@NoOrgRequired', () => {
+    it('allows a valid JWT without org claims and attaches BootstrapUserContext', () => {
+      mockVerify.mockReturnValue({ sub: 'u1', email: 'new@example.com' });
+      const { ctx, reflector, request } = makeContext(
+        { authorization: 'Bearer token' },
+        { isNoOrgRequired: true },
+      );
+      const guard = new AuthGuard(mockJwtService, reflector);
+
+      expect(guard.canActivate(ctx)).toBe(true);
+      expect(request.bootstrapUser).toEqual<BootstrapUserContext>({
+        userId: 'u1',
+        email: 'new@example.com',
+      });
+      expect(request.user).toBeUndefined();
+    });
+
+    it('throws 403 when sub is missing even on @NoOrgRequired route', () => {
+      mockVerify.mockReturnValue({ email: 'new@example.com' });
+      const { ctx, reflector } = makeContext(
+        { authorization: 'Bearer token' },
+        { isNoOrgRequired: true },
+      );
+      const guard = new AuthGuard(mockJwtService, reflector);
+      expect(() => guard.canActivate(ctx)).toThrow(ForbiddenException);
+    });
+
+    it('throws 401 when token is missing on @NoOrgRequired route', () => {
+      const { ctx, reflector } = makeContext({}, { isNoOrgRequired: true });
+      const guard = new AuthGuard(mockJwtService, reflector);
+      expect(() => guard.canActivate(ctx)).toThrow(UnauthorizedException);
+    });
+  });
 });
